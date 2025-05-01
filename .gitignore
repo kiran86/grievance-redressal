@@ -1,0 +1,15 @@
+# Dependency directories
+node_modules/
+
+# Environment files
+.env
+
+# Database backups
+*.sql
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Logs
+*.log
