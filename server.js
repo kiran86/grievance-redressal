@@ -54,6 +54,57 @@ app.use((req, res, next) => {
     next();
 });
 
+// Middleware to verify JWT token
+const authenticateJWT = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        const token = authHeader.split(' ')[1];
+        jwt.verify(token, JWT_SECRET_KEY, (err, user) => {
+            if (err) {
+                return res.sendStatus(403);
+            }
+            req.user = user;
+            next();
+        });
+    } else {
+        res.sendStatus(401);
+    }
+};
+
+// Admin login endpoint
+app.post('/api/auth/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        const [rows] = await pool.execute(
+            'SELECT * FROM users WHERE username = ? AND is_admin = TRUE',
+            [username]
+        );
+
+        if (rows.length === 0) {
+            return res.status(401).json({ message: 'Invalid username or password!'});
+        }
+
+        const user = rows[0];
+        const passwordMatch = await bcrypt.compare(password, user.password);
+
+        if (!passwordMatch) {
+            return res.status(401).json({ message: 'Invalid username or password!' });
+        }
+
+        const token = jwt.sign(
+            { userID: user.user_id, username: user.username, isAdmin: true },
+            JWT_SECRET_KEY,
+            { expiresIn: '1h' }
+        );
+
+        res.json({ token });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ message: 'Internal server error!' });
+    }
+});
+
 // Error logging
 app.use((err, req, res, next) => {
     console.error(`[ERROR] ${new Date().toISOString}`, err.stack);
