@@ -22,6 +22,9 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
+// Enable static file serving
+app.use(express.static('public'));
+
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -39,3 +42,25 @@ const verifyToken = (req, res, next) => {
         res.sendStatus(401); // Unauthorized
     }
 };
+
+// Serve main page
+app.get('/', (req, res) => {
+    res.sendFile('/public/index.html');
+});
+
+// Request logging middleware
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
+// Error logging
+app.use((err, req, res, next) => {
+    console.error(`[ERROR] ${new Date().toISOString}`, err.stack);
+    res.status(500).send('Something broken!');
+});
+
+// Start the server
+app.listen(PORT, () => {
+    console.log('Server running on port ' + PORT);
+});
