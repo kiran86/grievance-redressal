@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Grievance Redressal</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logout-btn { background-color: #f44336; color: white; padding: 8px 12px; border: none; cursor: pointer; }
+        .logout-btn:hover { background-color: #d32f2f; }
+        .status-filter { margin-bottom: 20px; }
+        .action-form { display: none; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+        tr:hover { background-color: #f5f5f5; }
+        .resolved { color: green; }
+        .pending { color: orange; }
+        .in-progress { color: blue; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Grievance Redressal - Admin Dashboard</h1>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+    </div>
+    
+    <div class="status-filter">
+        <label for="statusFilter">Filter by Status:</label>
+        <select id="statusFilter">
+            <option value="">All</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+        </select>
+    </div>
+    
+    <table id="complaintsTable" class="display">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>District</th>
+                <th>Submitted By</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be loaded via JavaScript -->
+        </tbody>
+    </table>
+    
+    <h2>District-wise Complaint Report</h2>
+    <table id="reportTable">
+        <thead>
+            <tr>
+                <th>District Name</th>
+                <th>Resolved Complaints</th>
+                <th>Pending Complaints</th>
+                <th>Total Complaints</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Report data will be loaded via JavaScript -->
+        </tbody>
+    </table>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        // Check authentication
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+            window.location.href = 'index.html';
+        }
+        
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('authToken');
+            window.location.href = 'index.html';
+        });
+        
+    </script>
+</body>
+</html>

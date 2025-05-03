@@ -11,6 +11,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Database connection pool
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
@@ -73,6 +76,7 @@ const authenticateJWT = (req, res, next) => {
 
 // Admin login endpoint
 app.post('/api/auth/login', async (req, res) => {
+    // console.log(req.body);
     const { username, password } = req.body;
 
     try {
@@ -86,7 +90,7 @@ app.post('/api/auth/login', async (req, res) => {
         }
 
         const user = rows[0];
-        const passwordMatch = await bcrypt.compare(password, user.password);
+        const passwordMatch = await bcrypt.compare(password, user.password.trim());
 
         if (!passwordMatch) {
             return res.status(401).json({ message: 'Invalid username or password!' });
@@ -102,6 +106,52 @@ app.post('/api/auth/login', async (req, res) => {
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ message: 'Internal server error!' });
+    }
+});
+
+// Submit a new complaint
+app.post('/api/complaints', async (req, res) => {
+    // console.log(req.body);
+    const {
+        fullName,
+        email,
+        phone,
+        address,
+        district,
+        complaintTitle,
+        complaintCategory,
+        complaintDescription
+    } = req.body;
+
+    try {
+        // check if user already exists
+        const [rows] = await pool.execute(
+            'SELECT user_id FROM users WHERE phone = ?',
+            [phone]
+        );
+
+        let userID;
+        if (rows.length === 0) {
+            // create new user
+            const [result] = await pool.execute(
+                'INSERT INTO users (username, password, email, full_name, phone, address, district) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [phone, '', email, fullName, phone, address, district]
+            );
+            userID = result.insertId;
+        } else {
+            userID = rows[0].user_id;
+        }
+
+        // create new complaint
+        const [result] = await pool.execute(
+            'INSERT INTO complaints (user_id, title, description, category, district, status) VALUES (?, ?, ?, ?, ?, ?)',
+            [userID, complaintTitle, complaintDescription, complaintCategory, district, 'Pending']
+        );
+
+        res.status(201).json({ message: 'Complaint submitted successfully!', complaintId: result.insertId });
+    } catch (error) {
+        console.error('Complaint submission error:', error);
+        res.status(500).json({ message: 'Error submitting complaint!' });
     }
 });
 

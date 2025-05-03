@@ -211,20 +211,20 @@
     <script>
         // Handle complaint submission
         document.getElementById('complaintForm').addEventListener('submit', async function (e) {
-           e.preventDefault();
-           
-           const formData = {
-                fullName: document.getElementById('fullName').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                address: document.getElementById('address').value,
-                district: document.getElementById('district').value,
-                complaintTitle: document.getElementById(complaintTitle).value,
-                complaintCategory: document.getElementById('complaintCategory').value,
-                complaintDescription: document.getElementById('complaintDescription').value
-           };
+            e.preventDefault();
+            
+            const formData = {
+                    fullName: document.getElementById('fullName').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
+                    address: document.getElementById('address').value,
+                    district: document.getElementById('district').value,
+                    complaintTitle: document.getElementById('complaintTitle').value,
+                    complaintCategory: document.getElementById('complaintCategory').value,
+                    complaintDescription: document.getElementById('complaintDescription').value
+            };
 
-           try {
+            try {
                 const response = await fetch('/api/complaints', {
                     method: 'POST',
                     headers: {
@@ -275,14 +275,23 @@
 
             try {
                 const response = await fetch('/api/auth/login', {
-                    method: POST,
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(loginData)
                 });
+
+                const result = await response.json();
+                if (response.ok) {
+                    // save the token and redirect to admin dashboard
+                    localStorage.setItem('authToken', result.token);
+                    window.location.href = '/admin/dashboard.html';
+                } else {
+                    document.getElementById('loginMessage').innerHTML = `<p style="color: red;">Error: ${result.message}</p>`;
+                }
             } catch (e) {
-               document.getElementById('loginMessage').innerHTML = `<p style="color: red;">Login failed: ${e.message()}</p>`
+               document.getElementById('loginMessage').innerHTML = `<p style="color: red;">Login failed: ${e.message}</p>`
             }
         });
     </script>
