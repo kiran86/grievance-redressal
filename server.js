@@ -109,6 +109,25 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+// Temporary route to reset admin password
+app.post('/api/reset-admin-password', async (req, res) => {
+    const newPassword = 'admin123';
+    const saltRounds = 10;
+
+    try {
+        const hash = await bcrypt.hash(newPassword, saltRounds);
+
+        const [result] = await pool.execute(
+            'UPDATE users SET password = ? WHERE username = ?',
+            [hash, 'admin']
+        );
+        res.json({ message: 'Password reset successfully!' });
+    } catch (error) {
+        console.error('Password reset error:', error);
+        res.status(500).json({ message: 'Internal server error!' });
+    }
+});
+
 // Submit a new complaint
 app.post('/api/complaints', async (req, res) => {
     // console.log(req.body);
