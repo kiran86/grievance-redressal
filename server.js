@@ -111,7 +111,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Temporary route to reset admin password
 app.post('/api/reset-admin-password', async (req, res) => {
-    const newPassword = 'admin123';
+    const newPassword = 'Admin@123';
     const saltRounds = 10;
 
     try {
