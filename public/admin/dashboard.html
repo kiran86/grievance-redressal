@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Grievance Redressal</title>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <link rel="shortcut icon" href="#">
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -84,7 +85,167 @@
             localStorage.removeItem('authToken');
             window.location.href = '../index.html';
         });
+
+        // Load complaints data
+        async function loadComplaints() {
+            try {
+                const response = await fetch('/api/complaints', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('authToken');
+                        window.location.href = '../index.html';
+                    }
+                    throw new Error('Failed to fetch complaints');
+                }
+
+                const complaints = await response.json();
+                renderComplaintsTable(complaints);
+                loadReportData();
+            } catch (error) {
+                console.error('Error loading complaints:', error);
+                alert('Failed to load complaints. Please try again.')
+            }
+        }
+
+        // Render complaints table
+        function renderComplaintsTable(complaints) {
+            const tableBody = document.querySelector('#complaintsTable tbody');
+            tableBody.innerHTML = '';
+
+            if (!complaints || complaints.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8">No complaints found.</td></tr>';
+                return;
+            }
+
+            // console.log(complaints);
+
+            complaints.forEach(complaint => {
+                const row = document.createElement('tr');
+
+                // Format date
+                const date = new Date(complaint.created_at);
+                const formattedDate = date.toLocaleDateString();
+
+                // Status class for styling
+                const statusClass = complaint.status.toLowerCase().replace(' ', '-');
+
+                row.innerHTML = `
+                    <td>${complaint.complaint_id}</td>
+                    <td>${complaint.title}</td>
+                    <td>${complaint.category}</td>
+                    <td>${complaint.district}</td>
+                    <td>${complaint.full_name}</td>
+                    <td>${formattedDate}</td>
+                    <td class="${statusClass}">${complaint.status}</td>
+                    <td>
+                        <button class="view-btn" data-id="${complaint.complaint_id}">View</button>
+                        ${complaint.status !== 'Resolved' ? `<button class="update-btn" data-id="${complaint.complaint_id}">Update</button>` : ''}
+                    </td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+
+            // Initialize DataTable
+            $('#complaintsTable').DataTable({
+                responsive: true,
+                pageLength: 10
+            });
+
+            // Add event listener for view button
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const complaintId = this.getAttribute('data-id');
+                    // viewComaplintDetails(complaintId);
+                });
+            });
+
+            // Add event listener for update button
+            document.querySelectorAll('.update-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const complaintId = this.getAttribute('data-id');
+                    // showUpdateForm(complaintId);
+                });
+            });
+
+            // Filter complaints
+            document.getElementById('statusFilter').addEventListener('change', function() {
+                const status = this.value;
+                const table = $('#complaintsTable').DataTable();
+                if (status === '') {
+                    table.search('').columns().search('').draw();
+                } else {
+                    table.columns(6).search(status).draw();
+                }
+            });
+        }
+        // Load report data
+        async function loadReportData() {
+            try {
+                const response = await fetch('/api/reports/district-wise', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch report data');
+                }
+
+                const reportData = await response.json();
+                renderReportTable(reportData);
+            } catch(error) {
+                console.error('Error loading report data:', error);
+                alert('Failed to load report data. Please try again.');
+            }
+        }
+
+        // Render report table
+        function renderReportTable(reportData) {
+            const tableBody = document.querySelector('#reportTable tbody');
+            tableBody.innerHTML = '';
+
+            let totalResolved = 0;
+            let totalPending = 0;
+            let grandTotal = 0;
+
+            reportData.forEach(district => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${district.district_name}</td>
+                    <td>${district.resolved_complaints}</td>
+                    <td>${district.pending_complaints}</td>
+                    <td>${district.total_complaints}</td>
+                `;
+                tableBody.appendChild(row);
+
+                totalResolved += district.resolved_complaints;
+                totalPending += district.pending_complaints;
+                grandTotal += district.total_complaints;
+            });
+
+            // Add grand total row
+            const totalRow = document.createElement('tr');
+            totalRow.style.fontWeight = 'bold';
+            totalRow.innerHTML = `
+                <td>GRAND TOTAL</td>
+                <td>${totalResolved}</td>
+                <td>${totalPending}</td>
+                <td>${grandTotal}</td>
+            `;
+
+            tableBody.appendChild(totalRow);
+        }
         
+        // Initialize the page
+        $(document).ready(function() {
+            loadComplaints();
+        });
     </script>
 </body>
 </html>

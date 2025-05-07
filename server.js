@@ -174,6 +174,53 @@ app.post('/api/complaints', async (req, res) => {
     }
 });
 
+// Get all complaints for admin
+app.get('/api/complaints', authenticateJWT, async (req, res) => {
+    try {
+        const [complaints] = await pool.execute(`
+            SELECT c.*, u.full_name, u.phone
+            FROM complaints c
+            JOIN users u ON c.user_id = u.user_id
+            ORDER BY c.created_at DESC
+        `);
+
+        // Format response
+        const formattedComplaints = complaints.map(complaint =>({
+            ...complaint,
+            user: {
+                fullName: complaint.full_name,
+                phone: complaint.phone
+            }
+        }));
+
+        res.json(formattedComplaints);
+    } catch (error) {
+        console.error('Error fetching complaints:', error);
+        res.status(500).json({ message: 'Failed to fetch complaints!' });
+    }
+});
+
+// Get District-wise report
+app.get('/api/reports/district-wise', authenticateJWT, async (req, res) => {
+    try {
+        const [report] = await pool.execute(`
+            SELECT
+                district AS district_name,
+                SUM(CASE WHEN status = 'Resolved' THEN 1 ELSE 0 END) AS resolved_complaints,
+                SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) AS pending_complaints,
+                COUNT(*) AS total_complaints
+            FROM complaints
+            GROUP BY district
+            ORDER BY district
+        `);
+
+        res.json(report);
+    } catch (error) {
+        console.error('Error generating report:', error);
+        res.status(500).json({ message: 'Failed to generate report.' })
+    }
+});
+
 // Error logging
 app.use((err, req, res, next) => {
     console.error(`[ERROR] ${new Date().toISOString}`, err.stack);
