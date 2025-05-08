@@ -2,7 +2,7 @@
 
 ![Tech Stack](https://img.shields.io/badge/Stack-Node.js%20%7C%20Express%20%7C%20MySQL-brightgreen)
 
-A full-stack complaint management system for West Bengal Government, enabling citizens to submit grievances and administrators to track resolution progress.
+A full-stack complaint management system for Government Administrations, enabling citizens to submit grievances and administrators to track resolution progress.
 
 ## Table of Contents
 - [Features](#features)
