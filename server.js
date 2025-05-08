@@ -200,6 +200,65 @@ app.get('/api/complaints', authenticateJWT, async (req, res) => {
     }
 });
 
+
+// Get individual complaint details
+app.get('/api/complaints/:id', authenticateJWT, async (req, res) => {
+    const complaintId = req.params.id;
+
+    try {
+        const [complaints] = await pool.execute(`
+            SELECT c.*, u.full_name, u.email, u.phone, u.address
+            FROM complaints c
+            JOIN users u
+            ON c.user_id = u.user_id
+            WHERE c.complaint_id = ?
+        `, [complaintId]);
+
+        if (complaints.length === 0) {
+            return res.status(404).json({ message: 'Complaint not found!' });
+        }
+
+        res.json(complaints[0]);
+    } catch (error) {
+        console.log('Error fetching complaint: ', error);
+        res.status(500).json({ message: 'Failed to fetch complaint' });
+    }
+});
+
+// Update complaint status
+app.put('/api/complaints/:id', authenticateJWT, async (req, res) => {
+    const complaintId = req.params.id;
+    const { status, action_taken } = req.body;
+
+    if (!status || (status === 'Resolved' && !action_taken)) {
+        return res.status(400).json({ message: 'Status and action taken are required for resolved complaints.' });
+    }
+
+    try {
+        let query;
+        let params;
+
+        if (status === 'Resolved') {
+            query = 'UPDATE complaints SET status = ?, action_taken = ?, resolved_at = CURRENT_TIMESTAMP WHERE complaint_id = ?';
+            params = [status, action_taken, complaintId];
+        } else {
+            query = 'UPDATE complaints SET status = ? WHERE complaint_id = ?';
+            params = [status, complaintId];
+        }
+
+        const [result] = await pool.execute(query, params);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Complaint not found' });
+        }
+
+        res.json({ message: 'Complaint updated successfully.' });
+    } catch (error) {
+        console.error('Error updating complaint: ', error);
+        res.status(500).json({ message: 'Failed to update complaint.' });
+    }
+});
+
 // Get District-wise report
 app.get('/api/reports/district-wise', authenticateJWT, async (req, res) => {
     try {

@@ -20,6 +20,71 @@
         .resolved { color: green; }
         .pending { color: orange; }
         .in-progress { color: blue; }
+        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: auto; overflow: auto; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 25%; }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
+        .close:hover, .close:focus { color: black; text-decoration: none; cursor: pointer; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select, textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button[type="submit"] {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        
+        button[type="submit"]:hover {
+            background-color: #219653;
+        }
+        .form-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .update-form {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 350px;
+        }
+        
+        .update-form h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+        
+        .close-btn {
+            float: right;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
     </style>
 </head>
 <body>
@@ -71,6 +136,48 @@
         </tbody>
     </table>
 
+    <!-- Modal for viewing complaint details -->
+    <div id="complaintDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Complaint Details</h2><hr>
+            <p><strong>Complaint ID:</strong> <span id="complaintId"></span></p>
+            <p><strong>Title:</strong> <span id="complaintTitle"></span></p>
+            <p><strong>Category:</strong> <span id="complaintCategory"></span></p>
+            <p><strong>District:</strong> <span id="complaintDistrict"></span></p>
+            <p><strong>Submitted By:</strong> <span id="complaintSubmittedBy"></span></p>
+            <p><strong>Email:</strong> <span id="complaintEmail"></span></p>
+            <p><strong>Phone:</strong> <span id="complaintPhone"></span></p>
+            <p><strong>Address:</strong> <span id="complaintAddress"></span></p>
+            <p><strong>Date:</strong> <span id="complaintDate"></span></p>
+            <p><strong>Description:</strong> <span id="complaintDescription"></span></p>
+            <p><strong>Status:</strong> <span id="complaintStatus"></span></p>
+        </div>
+    </div>
+
+    <!-- Modal for updating complaint status form -->
+    <div id="updateStatusModal" class="form-modal">
+        <div class="update-form">
+            <span class="close-btn">&times;</span>
+            <h2>Update Complaint Status</h2><hr>
+            <form id="updateStatusForm">
+                <div class="form-group">
+                    <label for="status">Status*</label>
+                    <select id="status" name="status" style="width: 100%;" required>
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+                <div class="form-group" id="action-taken-container" hidden>
+                    <label for="action-taken">Action Taken*</label>
+                    <textarea id="action-taken" name="action-taken" rows="3" scrollable style="width: 100%;"></textarea>
+                </div>
+                <button type="submit">Update Status</button>
+            </form>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script>
@@ -84,6 +191,31 @@
         document.getElementById('logoutBtn').addEventListener('click', function() {
             localStorage.removeItem('authToken');
             window.location.href = '../index.html';
+        });
+
+        // Handle complaint details modal
+        const complaintDetailsModal = document.getElementById('complaintDetailsModal');
+        const closeDetailsBtn = document.querySelector('.close');
+
+        closeDetailsBtn.addEventListener('click', () => {
+            complaintDetailsModal.style.display = 'none';
+        });
+
+        // Handle update status modal
+        const updateStatusModal = document.getElementById('updateStatusModal');
+        const closeUpdateStatusBtn = document.querySelector('.close-btn');
+
+        closeUpdateStatusBtn.addEventListener('click', () => {
+            updateStatusModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === complaintDetailsModal) {
+                complaintDetailsModal.style.display = 'none';
+            }
+            if (e.target === updateStatusModal) {
+                updateStatusModal.style.display = 'none';
+            }
         });
 
         // Load complaints data
@@ -141,7 +273,7 @@
                     <td>${complaint.district}</td>
                     <td>${complaint.full_name}</td>
                     <td>${formattedDate}</td>
-                    <td class="${statusClass}">${complaint.status}</td>
+                    <td class="${statusClass}" id="${complaint.complaint_id}-status">${complaint.status}</td>
                     <td>
                         <button class="view-btn" data-id="${complaint.complaint_id}">View</button>
                         ${complaint.status !== 'Resolved' ? `<button class="update-btn" data-id="${complaint.complaint_id}">Update</button>` : ''}
@@ -161,7 +293,7 @@
             document.querySelectorAll('.view-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const complaintId = this.getAttribute('data-id');
-                    // viewComaplintDetails(complaintId);
+                    viewComaplintDetails(complaintId);
                 });
             });
 
@@ -169,7 +301,7 @@
             document.querySelectorAll('.update-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const complaintId = this.getAttribute('data-id');
-                    // showUpdateForm(complaintId);
+                    showUpdateForm(complaintId);
                 });
             });
 
@@ -184,6 +316,111 @@
                 }
             });
         }
+
+        // View complaint details
+        async function viewComaplintDetails(complaintId) {
+            try {
+                const response = await fetch(`/api/complaints/${complaintId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch complaint details.');
+                }
+
+                const complaint = await response.json();
+
+                // Show complaint details in a modal
+                const modal = document.getElementById('complaintDetailsModal');
+                modal.style.display = 'flex';
+
+                // Format date
+                const date = new Date(complaint.created_at);
+                const formattedDate = date.toLocaleString();
+
+                document.getElementById('complaintId').textContent = complaint.complaint_id;
+                document.getElementById('complaintTitle').textContent = complaint.title;
+                document.getElementById('complaintCategory').textContent = complaint.category;
+                document.getElementById('complaintDistrict').textContent = complaint.district;
+                document.getElementById('complaintSubmittedBy').textContent = complaint.full_name;
+                document.getElementById('complaintEmail').textContent = complaint.email;
+                document.getElementById('complaintPhone').textContent = complaint.phone;
+                document.getElementById('complaintAddress').textContent = complaint.address;
+                document.getElementById('complaintDate').textContent = formattedDate;
+                document.getElementById('complaintDescription').textContent = complaint.description;
+                document.getElementById('complaintStatus').textContent = complaint.status;
+            } catch (error) {
+                console.error('Error viewing complaint details:', error);
+                alert('Failed to view complaint details. Please try again.');
+            }
+        }
+
+        // Show update complaint form
+        function showUpdateForm(complaintId) {
+            // Show update form
+            const modal = document.getElementById('updateStatusModal');
+            modal.style.display = 'flex';
+
+            const selectElement = document.getElementById('status');
+
+            // Set selected status
+            selectElement.value = document.getElementById(`${complaintId}-status`).textContent;
+            if (status === 'Resolved') {
+                document.getElementById('action-taken-container').hidden = false;
+                document.getElementById('action-taken').required = true;
+            } else {
+                document.getElementById('action-taken-container').hidden = true;
+                document.getElementById('action-taken').required = false;
+            }
+
+            // Add event listener for select element
+            selectElement.addEventListener('change', function() {
+                const status = this.value;
+                if (status === 'Resolved') {
+                    document.getElementById('action-taken-container').hidden = false;
+                    document.getElementById('action-taken').required = true;
+                } else {
+                    document.getElementById('action-taken-container').hidden = true;
+                    document.getElementById('action-taken').required = false;
+                }
+            });
+
+            // Add event listener for update button
+            document.getElementById('updateStatusForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const status = selectElement.value;
+                const actionTaken = document.getElementById('action-taken').value;
+
+                try {
+                    const response = await fetch(`/api/complaints/${complaintId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify({ status, action_taken: actionTaken })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to update complaint status.');
+                    }
+
+                    const result = await response.json();
+                    alert(result.message);
+                    modal.style.display = 'none';
+                    loadComplaints();
+                } catch (error) {
+                    console.error('Error updating complaint status:', error);
+                    alert('Failed to update complaint status. Please try again.');
+                }
+            });
+        }
+
+        //
+
         // Load report data
         async function loadReportData() {
             try {
