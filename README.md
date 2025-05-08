@@ -79,25 +79,5 @@ A full-stack complaint management system for West Bengal Government, enabling ci
         D -->|Manage Complaints| B;
         B --> E[Send Email Notifications];
 ```
-
-    ```mermaid
-        graph TD;
-            A[Citizen Browser] -->|Submit Complaint| B[Node.js Server];
-            B --> C[MySQL Database];
-            D[Admin Browser] -->|Login| B;
-            D -->|Manage Complaints| B;
-            B --> E[Send Email Notifications];
-    ```
-
 ## License
-    ```mermaid
-        graph LR;
-            A[Citizen] -->|Submit|> B[Complaint Form];
-            B --> C[Node.js Server];
-            C --> D[MySQL Database];
-            D --> E[Admin];
-            E --> F[Manage Complaints];
-            F --> G[Update Status];
-            G --> H[Email Notification];
-            H --> I[Citizen];
     
