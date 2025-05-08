@@ -71,11 +71,13 @@ A full-stack complaint management system for West Bengal Government, enabling ci
     node server.js
 
 ## System Architecture
-graph TD
-    A[Citizen Browser] -->|Submit Complaint| B[Node.js Server]
-    B --> C[MySQL Database]
-    D[Admin Browser] -->|Login| B
-    D -->|Manage Complaints| B
-    B --> E[Send Email Notifications]
+    ```mermaid
+    graph TD;
+        A[Citizen Browser] -->|Submit Complaint| B[Node.js Server];
+        B --> C[MySQL Database];
+        D[Admin Browser] -->|Login| B;
+        D -->|Manage Complaints| B;
+        B --> E[Send Email Notifications];
+    ```
 
 ## License
